@@ -1,13 +1,15 @@
 using System;
 using UnityEngine;
+using XLua;
 
-public class Clock : MonoBehaviour
+public class clock : MonoBehaviour
 {
-
-    const float
-        degreesPerHour = 30f,
-        degreesPerMinute = 6f,
-        degressPerSecond = 6f;
+    private const float
+        DegreesPerHour = 30f,
+        
+        DegreesPerMinute = 6f,
+        
+        DegressPerSecond = 6f;
 
     public Transform hoursTransform;
 
@@ -15,34 +17,63 @@ public class Clock : MonoBehaviour
 
     public Transform secondsTransform;
 
-    public bool continuous;
+    private LuaEnv _mLuaEnv = null;
     
     // Start is called before the first frame update
-    //void Start()
-    //{
-
-    //}
+    private void Start()
+    {
+       _mLuaEnv = new LuaEnv();
+       UpdateLua();
+    }
    
     // Update is called once per frame
-    void Update()
+    public void Update()
     {
-        DateTime time = DateTime.Now;
+        var time = DateTime.Now;
 
-        int hour = time.Hour;
+        var hour = time.Hour;
 
-        int second = time.Second;
+        var second = time.Second;
 
-        int minutes = time.Minute;
+        var minutes = time.Minute;
 
         hoursTransform.localRotation =
-                Quaternion.Euler(0f, hour* degreesPerHour, 0f);
+                Quaternion.Euler(0f, hour* DegreesPerHour, 0f);
 
         secondsTransform.localRotation =
-                Quaternion.Euler(0f, second* degressPerSecond, 0f);
+                Quaternion.Euler(0f, second* DegressPerSecond, 0f);
 
         minutesTransform.localRotation =
-                Quaternion.Euler(0f, minutes* degreesPerMinute, 0f);
+                Quaternion.Euler(0f, minutes* DegreesPerMinute, 0f);
 
         Debug.Log(DateTime.Now.Hour);
     }
+
+    private void OnGUI()
+    {
+        if (GUILayout.Button("按钮1"));
+        {
+            var luaTable = _mLuaEnv.Global.Get<ITest>("test");
+            var renderer = gameObject.GetComponent<Renderer>();
+            luaTable.onClick(renderer);
+        }
+        if (GUILayout.Button("更新Lua"))
+        {
+            UpdateLua();
+        }
+    }
+
+    private void UpdateLua()
+    {
+        _mLuaEnv?.Dispose();
+        _mLuaEnv = new LuaEnv();
+        _mLuaEnv.AddLoader(XLuaLoader.Loader);
+        _mLuaEnv.DoString("require main");
+    }
+}
+
+[CSharpCallLua]
+public interface ITest
+{
+    void onClick(Renderer renderer);
 }
