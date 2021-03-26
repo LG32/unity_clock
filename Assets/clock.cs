@@ -1,79 +1,43 @@
-using System;
+﻿using System;
 using UnityEngine;
-using XLua;
 
-public class clock : MonoBehaviour
-{
-    private const float
-        DegreesPerHour = 30f,
-        
-        DegreesPerMinute = 6f,
-        
-        DegressPerSecond = 6f;
+public class Clock : MonoBehaviour {
 
-    public Transform hoursTransform;
+	const float
+		degreesPerHour = 30f,
+		degreesPerMinute = 6f,
+		degreesPerSecond = 6f;
 
-    public Transform minutesTransform;
+	public Transform hoursTransform, minutesTransform, secondsTransform;
 
-    public Transform secondsTransform;
+	public bool continuous;
 
-    private LuaEnv _mLuaEnv = null;
-    
-    // Start is called before the first frame update
-    private void Start()
-    {
-       _mLuaEnv = new LuaEnv();
-       UpdateLua();
-    }
-   
-    // Update is called once per frame
-    public void Update()
-    {
-        var time = DateTime.Now;
+	void Update () {
+		if (continuous) {
+			UpdateContinuous();
+		}
+		else {
+			UpdateDiscrete();
+		}
+	}
 
-        var hour = time.Hour;
+	void UpdateContinuous () {
+		TimeSpan time = DateTime.Now.TimeOfDay;
+		hoursTransform.localRotation =
+			Quaternion.Euler(0f, (float)time.TotalHours * degreesPerHour, 0f);
+		minutesTransform.localRotation =
+			Quaternion.Euler(0f, (float)time.TotalMinutes * degreesPerMinute, 0f);
+		secondsTransform.localRotation =
+			Quaternion.Euler(0f, (float)time.TotalSeconds * degreesPerSecond, 0f);
+	}
 
-        var second = time.Second;
-
-        var minutes = time.Minute;
-
-        hoursTransform.localRotation =
-                Quaternion.Euler(0f, hour* DegreesPerHour, 0f);
-
-        secondsTransform.localRotation =
-                Quaternion.Euler(0f, second* DegressPerSecond, 0f);
-
-        minutesTransform.localRotation =
-                Quaternion.Euler(0f, minutes* DegreesPerMinute, 0f);
-
-        Debug.Log(DateTime.Now.Hour);
-    }
-
-    private void OnGUI()
-    {
-        if (GUILayout.Button("按钮1"));
-        {
-            var luaTable = _mLuaEnv.Global.Get<ITest>("test");
-            var renderer = gameObject.GetComponent<Renderer>();
-            luaTable.onClick(renderer);
-        }
-        if (GUILayout.Button("更新Lua"))
-        {
-            UpdateLua();
-        }
-    }
-
-    private void UpdateLua()
-    {
-        _mLuaEnv?.Dispose();
-        _mLuaEnv = new LuaEnv();
-        _mLuaEnv.AddLoader(XLuaLoader.Loader);
-        _mLuaEnv.DoString("require main");
-    }
-}
-
-[CSharpCallLua]
-public interface ITest
-{
-    void onClick(Renderer renderer);
+	void UpdateDiscrete () {
+		DateTime time = DateTime.Now;
+		hoursTransform.localRotation =
+			Quaternion.Euler(0f, time.Hour * degreesPerHour, 0f);
+		minutesTransform.localRotation =
+			Quaternion.Euler(0f, time.Minute * degreesPerMinute, 0f);
+		secondsTransform.localRotation =
+			Quaternion.Euler(0f, time.Second * degreesPerSecond, 0f);
+	}
 }
